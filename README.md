@@ -116,6 +116,38 @@ viewModelScope.launch {
 - **Prevencion de errores**: Boton deshabilitado durante operaciones
 - **Robustez**: Manejo gracioso de errores con mensajes informativos
 
+## Debugging y Optimizacion (Semana 4)
+
+### Logging con Logcat
+
+Se implemento un sistema de logging estructurado con TAGs personalizados:
+
+| TAG | Proposito |
+|-----|-----------|
+| `SolicitudViewModel` | Logs generales del ViewModel |
+| `SolicitudCRUD` | Operaciones Create, Read, Update, Delete |
+| `SolicitudPerformance` | Metricas de tiempo de ejecucion |
+| `SolicitudValidation` | Validacion de datos del formulario |
+| `SolicitudDB` | Operaciones en base de datos |
+| `SolicitudRepository` | Capa Repository |
+
+### Manejo de Excepciones
+
+Se implementaron try-catch con excepciones especificas:
+
+| Excepcion | Causa |
+|-----------|-------|
+| `SQLiteException` | Errores de base de datos |
+| `IllegalStateException` | Estados invalidos |
+| `IOException` | Errores de almacenamiento |
+| `IllegalArgumentException` | Argumentos invalidos |
+
+### Analisis de Rendimiento
+
+- **CPU Profiler**: Analisis de consumo de CPU durante operaciones
+- **Memory Profiler**: Heap Dump con 0 memory leaks detectados
+- **Metricas de tiempo**: Medicion en ms de todas las operaciones CRUD
+
 ## Cumplimiento de Rubrica
 
 ### Semana 2 - Persistencia y UI
@@ -137,6 +169,16 @@ viewModelScope.launch {
 | Estados de carga (StateFlow) | isSaving, isDeleting |
 | Manejo de errores (try-catch) | Con feedback al usuario |
 | Prevencion de operaciones duplicadas | Verificacion de estado |
+
+### Semana 4 - Debugging y Optimizacion
+
+| Criterio | Estado |
+|----------|--------|
+| Flujo critico seleccionado | `saveSolicitud()` con justificacion |
+| Logcat con filtros y TAGs | 6 TAGs implementados |
+| Try-catch estrategico | 4 excepciones especificas |
+| Herramientas de Profiling | CPU Profiler + Memory Profiler |
+| Informe tecnico | Documentado en `docs/` |
 
 ## Accesibilidad (WCAG AA)
 
@@ -221,14 +263,14 @@ HomeScreen (Con solicitud)
 ```
 MyApplication/
 ├── app/src/main/java/com/example/myapplication/
-│   ├── viewmodel/SolicitudViewModel.kt    # Con Coroutines optimizadas
-│   └── ui/screens/FormScreen.kt           # Con indicador de carga
+│   ├── viewmodel/SolicitudViewModel.kt    # Con logging y try-catch
+│   └── data/repository/SolicitudRepository.kt  # Con logging
 ├── docs/
-│   ├── Informe_Semana3_Coroutines.md      # Informe tecnico
-│   ├── antes_01.png                       # Captura antes
-│   ├── antes_02.png
-│   ├── despues_01.png                     # Captura despues
-│   └── despues_02.png
+│   ├── INFORME_SEMANA4_DEBUGGING_OPTIMIZACION.md  # Informe tecnico
+│   └── screenshots/
+│       ├── logcat_crud.png                # Evidencia Logcat
+│       ├── profiler_cpu.png               # Evidencia CPU Profiler
+│       └── profiler_memory.png            # Evidencia Memory Profiler
 └── README.md
 ```
 
