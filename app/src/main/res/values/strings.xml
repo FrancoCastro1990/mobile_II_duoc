@@ -1,0 +1,72 @@
+<resources>
+    <string name="app_name">Necesitas Ayuda</string>
+    <string name="app_title">Necesitas Ayuda?</string>
+
+    <!-- Tipos de servicio -->
+    <string name="tipo_gasfiteria">Gasfiteria</string>
+    <string name="tipo_electricidad">Electricidad</string>
+    <string name="tipo_electrodomesticos">Electrodomesticos</string>
+    <string name="tipo_gasfiteria_desc">Reparacion de canerias, llaves, filtraciones</string>
+    <string name="tipo_electricidad_desc">Instalaciones, reparaciones electricas</string>
+    <string name="tipo_electrodomesticos_desc">Reparacion de refrigeradores, lavadoras, etc.</string>
+
+    <!-- Estados -->
+    <string name="estado_pendiente">Pendiente</string>
+    <string name="estado_en_proceso">En Proceso</string>
+    <string name="estado_completado">Completado</string>
+    <string name="estado_pendiente_desc">La solicitud esta esperando ser atendida</string>
+    <string name="estado_en_proceso_desc">Un tecnico esta trabajando en la solicitud</string>
+    <string name="estado_completado_desc">El servicio ha sido completado</string>
+
+    <!-- Titulos de pantallas -->
+    <string name="title_nueva_solicitud">Nueva Solicitud</string>
+    <string name="title_editar_solicitud">Editar Solicitud</string>
+    <string name="title_detalle_solicitud">Detalle de Solicitud</string>
+
+    <!-- Secciones del formulario -->
+    <string name="section_tipo_servicio">Tipo de Servicio</string>
+    <string name="section_datos_cliente">Datos del Cliente</string>
+    <string name="section_descripcion">Descripcion del Problema</string>
+
+    <!-- Labels de campos -->
+    <string name="label_nombre_cliente">Nombre del Cliente</string>
+    <string name="label_telefono">Telefono</string>
+    <string name="label_direccion">Direccion</string>
+    <string name="label_descripcion">Describa el problema (opcional)</string>
+    <string name="label_fecha_solicitud">Fecha de Solicitud</string>
+
+    <!-- Botones -->
+    <string name="btn_guardar">Guardar Solicitud</string>
+    <string name="btn_actualizar">Actualizar Solicitud</string>
+    <string name="btn_cancelar">Cancelar</string>
+    <string name="btn_eliminar">Eliminar</string>
+    <string name="btn_editar">Editar</string>
+    <string name="btn_volver">Volver</string>
+    <string name="btn_cambiar_estado">Cambiar Estado</string>
+
+    <!-- Dialogos -->
+    <string name="dialog_title_tipo_servicio">Seleccione el tipo de servicio</string>
+    <string name="dialog_eliminar_titulo">Eliminar Solicitud</string>
+    <string name="dialog_eliminar_mensaje">Esta seguro que desea eliminar esta solicitud? Esta accion no se puede deshacer.</string>
+
+    <!-- Bottom Sheet -->
+    <string name="bottomsheet_titulo_estado">Cambiar Estado</string>
+
+    <!-- Estado vacio -->
+    <string name="empty_state_title">No hay solicitudes</string>
+    <string name="empty_state_subtitle">Presione el boton + para crear una nueva solicitud de servicio</string>
+
+    <!-- Accesibilidad -->
+    <string name="fab_nueva_solicitud">Crear nueva solicitud</string>
+    <string name="seleccionar_tipo_servicio">Seleccione un tipo de servicio</string>
+    <string name="selector_tipo_servicio_description">Toque para seleccionar el tipo de servicio</string>
+    <string name="card_description">Solicitud de %1$s para %2$s, estado: %3$s</string>
+
+    <!-- Mensajes -->
+    <string name="sin_descripcion">Sin descripcion</string>
+
+    <!-- Estados de carga -->
+    <string name="guardando">Guardando...</string>
+    <string name="eliminando">Eliminando...</string>
+    <string name="cargando">Cargando...</string>
+</resources>
