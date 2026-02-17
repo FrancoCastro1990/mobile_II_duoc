@@ -13,11 +13,12 @@ Desarrollada como actividad formativa para el curso "Desarrollo App Moviles II" 
 
 ## Capturas de Pantalla
 
-La aplicacion consta de 3 pantallas principales:
+La aplicacion consta de 4 pantallas principales:
 
 1. **HomeScreen** - Lista de solicitudes con estado
 2. **FormScreen** - Formulario para crear/editar solicitudes
 3. **DetailScreen** - Detalle de solicitud con opciones de gestion
+4. **TecnicosScreen** - Directorio de tecnicos disponibles via API (Semana 6)
 
 ## Requisitos Tecnicos
 
@@ -87,11 +88,13 @@ app/src/main/java/com/example/myapplication/
 
 | Componente | Ubicacion | Uso |
 |------------|-----------|-----|
-| LazyColumn | HomeScreen | Lista scrollable de solicitudes |
+| LazyColumn | HomeScreen, TecnicosScreen | Lista scrollable de solicitudes y tecnicos |
 | AlertDialog | FormScreen, DetailScreen | Seleccion de servicio, confirmacion |
 | ModalBottomSheet | DetailScreen | Cambio de estado |
-| CircularProgressIndicator | FormScreen | Indicador de carga durante guardado |
+| CircularProgressIndicator | FormScreen, TecnicosScreen | Indicador de carga durante guardado y consulta API |
 | Toast | FormScreen, DetailScreen | Feedback de acciones |
+| Card | TecnicosScreen | TecnicoCard con calificacion, telefono, zona |
+| Scaffold + TopAppBar | TecnicosScreen | Barra superior con navegacion |
 
 ## Optimizacion con Coroutines (Semana 3)
 
@@ -164,6 +167,56 @@ Se implementaron try-catch con excepciones especificas:
 - **Memory Profiler**: Heap Dump con 0 memory leaks detectados
 - **Metricas de tiempo**: Medicion en ms de todas las operaciones CRUD
 
+## Diagnostico de Memory Leaks (Semana 5)
+
+### Herramientas Utilizadas
+
+| Herramienta | Version | Proposito |
+|-------------|---------|-----------|
+| Android Profiler | Android Studio | Monitoreo de heap en tiempo real, heap dumps, forzar GC |
+| LeakCanary | 2.14 | Deteccion automatica de leaks con cadena de retencion |
+| Logcat (SolicitudMemory) | - | Metricas de uso de memoria en runtime |
+
+### Escenarios Analizados
+
+**Escenario 1 - Navegacion repetida (Home -> Form -> Home x5):**
+Se verifico que el heap se mantiene estable despues de cada ciclo de GC. No hay crecimiento progresivo de memoria gracias al manejo correcto del backstack y `viewModelScope`.
+
+**Escenario 2 - Rotacion de pantalla (5 rotaciones):**
+Se verifico que cada Activity destruida es liberada por el GC. El Handler no retiene la Activity gracias a `removeCallbacks()` en `onDestroy()`.
+
+### Memory Leaks Detectados y Corregidos
+
+| Leak | Causa | Correccion | Archivo |
+|------|-------|------------|---------|
+| Referencia estatica a Activity | `companion object` con `var instance` | Solo constantes en companion object | `MainActivity.kt` |
+| Handler sin cleanup | `postDelayed` sin `removeCallbacks` en `onDestroy` | `memoryHandler.removeCallbacks()` en `onDestroy()` | `MainActivity.kt` |
+| GlobalScope vs viewModelScope | `GlobalScope.launch` no se cancela | `viewModelScope.launch` con cancelacion automatica | `SolicitudViewModel.kt` |
+
+### Monitoreo de Memoria en Runtime
+
+Se implemento un sistema de monitoreo periodico en `MainActivity.kt`:
+
+```kotlin
+// Handler con cleanup correcto para monitoreo de memoria
+private val memoryHandler = Handler(Looper.getMainLooper())
+private val memoryCheckRunnable = object : Runnable {
+    override fun run() {
+        logMemoryUsage("Monitoreo periodico")
+        memoryHandler.postDelayed(this, MEMORY_CHECK_INTERVAL)
+    }
+}
+
+override fun onDestroy() {
+    super.onDestroy()
+    memoryHandler.removeCallbacks(memoryCheckRunnable) // Previene leak
+}
+```
+
+### Informe Completo
+
+El informe detallado de la Semana 5 con explicaciones de cada leak, codigo antes/despues y validacion se encuentra en [`docs/INFORME_SEMANA5_MEMORY_LEAKS.md`](docs/INFORME_SEMANA5_MEMORY_LEAKS.md).
+
 ## Cumplimiento de Rubrica
 
 ### Semana 2 - Persistencia y UI
@@ -195,6 +248,16 @@ Se implementaron try-catch con excepciones especificas:
 | Try-catch estrategico | 4 excepciones especificas |
 | Herramientas de Profiling | CPU Profiler + Memory Profiler |
 | Informe tecnico | Documentado en `docs/` |
+
+### Semana 5 - Memory Leaks
+
+| Criterio | Estado |
+|----------|--------|
+| Analisis con Android Profiler | 2 escenarios: navegacion repetida + rotacion |
+| Integracion LeakCanary | LeakCanary 2.14 detectando leaks con heap trace |
+| Correccion de mala practica | Handler cleanup, no static Activity ref, viewModelScope |
+| Evidencia antes/despues | LeakCanary: 1 LEAK -> 0 LEAKS con capturas |
+| Informe tecnico | `docs/INFORME_SEMANA5_MEMORY_LEAKS.md` |
 
 ## Accesibilidad (WCAG AA)
 
@@ -412,12 +475,19 @@ El proyecto mantiene una separacion clara de responsabilidades siguiendo el patr
 
 ```
 MyApplication/
+├── apk/
+│   └── app-debug.apk                             # APK listo para instalar
 ├── app/src/main/java/com/example/myapplication/
-│   ├── MemoryLeakDemo.kt                         # Ejemplos memory leaks
+│   ├── MainActivity.kt                            # Con monitoreo de memoria
+│   ├── MemoryLeakDemo.kt                         # Ejemplos educativos memory leaks
 │   ├── viewmodel/
 │   │   ├── SolicitudViewModel.kt                  # Con logging y try-catch
 │   │   └── TecnicoViewModel.kt                    # ViewModel API (Semana 6)
 │   └── data/
+│       ├── local/                                 # Room Database (Semana 2)
+│       │   ├── AppDatabase.kt
+│       │   ├── SolicitudDao.kt
+│       │   └── SolicitudEntity.kt
 │       ├── repository/
 │       │   ├── SolicitudRepository.kt             # Con logging
 │       │   └── TecnicoRepository.kt               # Repository API (Semana 6)
@@ -431,16 +501,18 @@ MyApplication/
 │               └── TecnicosResponse.kt
 ├── docs/
 │   ├── INFORME_SEMANA4_DEBUGGING_OPTIMIZACION.md  # Informe Semana 4
+│   ├── INFORME_SEMANA5_MEMORY_LEAKS.md            # Informe Semana 5
+│   ├── INFORME_SEMANA6_LIBRERIAS_EXTERNAS.md      # Informe Semana 6
 │   └── screenshots/
-│       ├── semana6/
-│       │   ├── tecnicos_gasfiteria.png            # TecnicosScreen gasfiteria
-│       │   ├── tecnicos_electricidad.png          # TecnicosScreen electricidad
-│       │   ├── logcat_solicitud_api.png           # Logcat tag:SolicitudAPI
-│       │   ├── logcat_mock_interceptor.png        # Logcat tag:MockInterceptor
-│       │   ├── logcat_performance.png             # Logcat tag:SolicitudPerformance
-│       │   ├── leakcanary_leak_detectado.png      # LeakCanary: 1 APPLICATION LEAK
-│       │   └── leakcanary_leak_corregido.png      # LeakCanary: 0 APPLICATION LEAKS
-│       ├── logcat_crud.png                        # Evidencia Logcat Semana 4
+│       ├── semana6/                               # Evidencias Semana 6
+│       │   ├── tecnicos_gasfiteria.png
+│       │   ├── tecnicos_electricidad.png
+│       │   ├── logcat_solicitud_api.png
+│       │   ├── logcat_mock_interceptor.png
+│       │   ├── logcat_performance.png
+│       │   ├── leakcanary_leak_detectado.png
+│       │   └── leakcanary_leak_corregido.png
+│       ├── logcat_crud.png                        # Evidencia Semana 4
 │       ├── profiler_cpu.png                       # CPU Profiler Semana 4
 │       └── profiler_memory.png                    # Memory Profiler Semana 4
 └── README.md
@@ -448,6 +520,7 @@ MyApplication/
 
 ## Verificacion de Funcionalidad
 
+### Flujo basico (Semana 2-4)
 1. Compilar y ejecutar la app
 2. Verificar estado vacio inicial
 3. Crear nueva solicitud con FAB
@@ -462,6 +535,19 @@ MyApplication/
 12. Eliminar solicitud (AlertDialog confirmacion)
 13. Cerrar y reabrir app - verificar persistencia
 14. Probar con TalkBack para validar accesibilidad
+
+### Memory Leaks (Semana 5)
+15. Rotar pantalla 5 veces - verificar que memoria se estabiliza
+16. Verificar en Logcat con `tag:SolicitudMemory` que el monitoreo funciona
+17. Verificar que LeakCanary no reporta leaks en uso normal
+
+### Directorio de Tecnicos (Semana 6)
+18. Abrir detalle de una solicitud
+19. Tap en **"Ver Tecnicos Disponibles"**
+20. **Verificar CircularProgressIndicator durante carga**
+21. Verificar que TecnicosScreen muestra lista de tecnicos con datos
+22. Verificar en Logcat con `tag:SolicitudAPI` los logs de la consulta
+23. Verificar en Logcat con `tag:MockInterceptor` el interceptor en accion
 
 ## Autor
 
