@@ -69,4 +69,16 @@
     <string name="guardando">Guardando...</string>
     <string name="eliminando">Eliminando...</string>
     <string name="cargando">Cargando...</string>
+
+    <!-- Tecnicos (Semana 6) -->
+    <string name="title_tecnicos_disponibles">Tecnicos Disponibles</string>
+    <string name="loading_tecnicos">Buscando tecnicos…</string>
+    <string name="error_titulo">Error</string>
+    <string name="btn_reintentar">Reintentar</string>
+    <string name="btn_ver_tecnicos">Ver Tecnicos Disponibles</string>
+    <string name="tecnicos_subtitle">%1$d tecnicos encontrados para %2$s</string>
+    <string name="disponible">Disponible</string>
+    <string name="no_disponible">No disponible</string>
+    <string name="anios_experiencia">%1$d anos de experiencia</string>
+    <string name="zona_cobertura">Zona: %1$s</string>
 </resources>

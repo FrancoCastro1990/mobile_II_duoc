@@ -10,12 +10,15 @@ import androidx.navigation.navArgument
 import com.example.myapplication.ui.screens.DetailScreen
 import com.example.myapplication.ui.screens.FormScreen
 import com.example.myapplication.ui.screens.HomeScreen
+import com.example.myapplication.ui.screens.TecnicosScreen
 import com.example.myapplication.viewmodel.SolicitudViewModel
+import com.example.myapplication.viewmodel.TecnicoViewModel
 
 object Routes {
     const val HOME = "home"
     const val FORM = "form"
     const val DETAIL = "detail"
+    const val TECNICOS = "tecnicos"
 }
 
 @Composable
@@ -81,7 +84,27 @@ fun NavGraph(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToEdit = { id ->
                     navController.navigate("${Routes.FORM}?solicitudId=$id")
+                },
+                onNavigateToTecnicos = { tipo ->
+                    navController.navigate("${Routes.TECNICOS}/$tipo")
                 }
+            )
+        }
+
+        composable(
+            route = "${Routes.TECNICOS}/{tipoServicio}",
+            arguments = listOf(
+                navArgument("tipoServicio") {
+                    type = NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+            val tipoServicio = backStackEntry.arguments?.getString("tipoServicio") ?: return@composable
+            val tecnicoViewModel: TecnicoViewModel = viewModel()
+            TecnicosScreen(
+                tipoServicio = tipoServicio,
+                viewModel = tecnicoViewModel,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }

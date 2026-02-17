@@ -32,15 +32,26 @@ La aplicacion consta de 3 pantallas principales:
 ```
 app/src/main/java/com/example/myapplication/
 ├── MainActivity.kt                 # Activity principal
+├── MemoryLeakDemo.kt               # Ejemplos educativos de memory leaks (Semana 6)
 ├── data/
 │   ├── local/
 │   │   ├── AppDatabase.kt          # Room Database singleton
 │   │   ├── SolicitudDao.kt         # Data Access Object
 │   │   └── SolicitudEntity.kt      # Entidad de base de datos
+│   ├── remote/                      # Capa de red (Semana 6)
+│   │   ├── ApiService.kt           # Interface Retrofit
+│   │   ├── MockInterceptor.kt      # Interceptor OkHttp con datos mock
+│   │   ├── NetworkResult.kt        # Sealed class: Loading, Success, Error
+│   │   ├── RetrofitClient.kt       # Singleton Retrofit + OkHttp
+│   │   └── dto/
+│   │       ├── TecnicoDto.kt       # Modelo de datos del tecnico
+│   │       └── TecnicosResponse.kt # Wrapper de respuesta API
 │   └── repository/
-│       └── SolicitudRepository.kt  # Repositorio de datos
+│       ├── SolicitudRepository.kt  # Repositorio de solicitudes
+│       └── TecnicoRepository.kt    # Repositorio de tecnicos (Semana 6)
 ├── viewmodel/
-│   └── SolicitudViewModel.kt       # ViewModel con StateFlow
+│   ├── SolicitudViewModel.kt       # ViewModel de solicitudes
+│   └── TecnicoViewModel.kt         # ViewModel de tecnicos (Semana 6)
 ├── navigation/
 │   └── NavGraph.kt                 # Configuracion de navegacion
 └── ui/
@@ -49,7 +60,8 @@ app/src/main/java/com/example/myapplication/
     ├── screens/
     │   ├── HomeScreen.kt           # Lista de solicitudes
     │   ├── FormScreen.kt           # Formulario CRUD
-    │   └── DetailScreen.kt         # Detalle con BottomSheet
+    │   ├── DetailScreen.kt         # Detalle con BottomSheet
+    │   └── TecnicosScreen.kt       # Directorio de tecnicos (Semana 6)
     └── theme/
         ├── Color.kt                # Colores WCAG AA
         ├── Type.kt                 # Tipografia min 14sp
@@ -66,6 +78,10 @@ app/src/main/java/com/example/myapplication/
 | Lifecycle ViewModel | 2.6.1 | Gestion de estado |
 | Kotlin Coroutines | 1.7.3 | Operaciones asincronas |
 | KSP | 2.0.0-1.0.21 | Procesador de anotaciones |
+| Retrofit | 2.9.0 | Cliente API REST (Semana 6) |
+| OkHttp | 4.12.0 | Cliente HTTP con interceptores (Semana 6) |
+| Gson | 2.10.1 | Serializacion/deserializacion JSON (Semana 6) |
+| LeakCanary | 2.14 | Deteccion de memory leaks (Semana 5-6) |
 
 ## Componentes UI Avanzados
 
@@ -255,22 +271,178 @@ HomeScreen (Con solicitud)
     |
     ├── [Editar] --> FormScreen (Edicion)
     ├── [Cambiar Estado] --> BottomSheet
+    ├── [Ver Tecnicos] --> TecnicosScreen (API Retrofit - Semana 6)
     └── [Eliminar] --> AlertDialog --> HomeScreen
 ```
+
+## Integracion de Librerias Externas (Semana 6)
+
+### Flujo Funcional Seleccionado
+
+Se selecciono el flujo **DetailScreen -> Ver Tecnicos Disponibles -> TecnicosScreen** como flujo critico porque integra multiples tecnicas avanzadas:
+- **Persistencia local** (Room) para la solicitud existente
+- **Comunicacion de red** (Retrofit + OkHttp) para consultar tecnicos via API
+- **Procesos asincronos** (Coroutines con Dispatchers.IO) para la llamada API
+- **Manejo de errores** (try-catch con HttpException, IOException) en la capa de red
+- **Estados reactivos** (StateFlow con NetworkResult sealed class) para Loading/Success/Error
+
+### Libreria Externa: Retrofit 2 + OkHttp + Gson
+
+Se integro **Retrofit 2.9.0** como libreria externa principal para comunicacion API REST, junto con **OkHttp 4.12.0** como cliente HTTP y **Gson 2.10.1** para serializacion JSON.
+
+**Justificacion tecnica:**
+- **Retrofit**: Es el estandar de la industria para APIs REST en Android. Permite definir endpoints como interfaces Kotlin con anotaciones (`@GET`, `@Path`), soporta coroutines nativamente con funciones `suspend`, y se integra con multiples convertidores de datos.
+- **OkHttp**: Proporciona un cliente HTTP eficiente con soporte para interceptores, lo que permite implementar el `MockInterceptor` para simular respuestas de API sin servidor real, y el `HttpLoggingInterceptor` para debugging de requests/responses.
+- **Gson**: Libreria de Google para conversion automatica entre JSON y objetos Kotlin (data classes), eliminando la necesidad de parseo manual.
+
+**Archivos creados:**
+
+| Archivo | Proposito |
+|---------|-----------|
+| `data/remote/ApiService.kt` | Interface Retrofit con endpoint `GET /tecnicos/{tipo}` |
+| `data/remote/MockInterceptor.kt` | Interceptor OkHttp que simula API con datos mock chilenos |
+| `data/remote/RetrofitClient.kt` | Singleton con OkHttpClient, timeouts 10s, Gson converter |
+| `data/remote/NetworkResult.kt` | Sealed class para estados: Loading, Success, Error |
+| `data/remote/dto/TecnicoDto.kt` | Data class del tecnico (nombre, especialidad, calificacion, etc.) |
+| `data/remote/dto/TecnicosResponse.kt` | Wrapper de respuesta API (success, data, count, timestamp) |
+| `data/repository/TecnicoRepository.kt` | Repository con Dispatchers.IO y manejo de errores |
+| `viewmodel/TecnicoViewModel.kt` | ViewModel con StateFlow para estado reactivo |
+| `ui/screens/TecnicosScreen.kt` | Pantalla con estados Loading/Success/Error |
+
+### Directorio de Tecnicos - Capturas
+
+**TecnicosScreen mostrando tecnicos de gasfiteria:**
+
+![Tecnicos Gasfiteria](docs/screenshots/semana6/tecnicos_gasfiteria.png)
+
+**TecnicosScreen mostrando tecnicos de electricidad:**
+
+![Tecnicos Electricidad](docs/screenshots/semana6/tecnicos_electricidad.png)
+
+### Procesos Asincronos en la Capa de Red
+
+Todas las operaciones de red se ejecutan en `Dispatchers.IO` mediante coroutines:
+
+```kotlin
+// TecnicoRepository.kt - Ejecucion asincrona con manejo de errores
+suspend fun getTecnicosByTipo(tipo: String): NetworkResult<List<TecnicoDto>> {
+    return withContext(Dispatchers.IO) {
+        try {
+            val response = apiService.getTecnicosByTipo(tipo)
+            NetworkResult.Success(response.data)
+        } catch (e: HttpException) {
+            NetworkResult.Error("Error del servidor: ${e.code()}")
+        } catch (e: IOException) {
+            NetworkResult.Error("Error de conexion")
+        }
+    }
+}
+```
+
+El `MockInterceptor` simula un delay de red de 100-300ms para reproducir condiciones reales, lo que permite verificar que el `CircularProgressIndicator` funciona correctamente durante la carga.
+
+### Debugging y Logging de la Capa de Red
+
+Se implementaron TAGs adicionales para monitorear la comunicacion API:
+
+| TAG | Proposito |
+|-----|-----------|
+| `SolicitudAPI` | Requests y responses de la API |
+| `MockInterceptor` | Interceptor simulando respuestas |
+| `RetrofitClient` | Configuracion del cliente HTTP |
+| `SolicitudPerformance` | Tiempos de ejecucion de API calls |
+
+**Logcat filtrando tag:SolicitudAPI:**
+
+![Logcat SolicitudAPI](docs/screenshots/semana6/logcat_solicitud_api.png)
+
+**Logcat filtrando tag:MockInterceptor:**
+
+![Logcat MockInterceptor](docs/screenshots/semana6/logcat_mock_interceptor.png)
+
+**Logcat filtrando tag:SolicitudPerformance:**
+
+![Logcat Performance](docs/screenshots/semana6/logcat_performance.png)
+
+### Diagnostico de Memory Leaks con LeakCanary
+
+Se utilizo **LeakCanary 2.14** para diagnosticar y prevenir memory leaks. Se creo el archivo `MemoryLeakDemo.kt` con 3 ejemplos educativos de leaks comunes en Android:
+
+| Leak | Causa | Correccion |
+|------|-------|------------|
+| Referencia estatica a Activity | Lista estatica acumula Activities destruidos | Usar `WeakReference` |
+| Handler sin cleanup | `postDelayed` mantiene referencia al Activity | `removeCallbacksAndMessages(null)` en `onDestroy` |
+| Listener sin unregister | Listeners acumulados en singleton | `unregister()` en `onDestroy` |
+
+**Leak detectado - Se provoco un leak con referencia estatica a Activity y LeakCanary detecto `1 APPLICATION LEAKS`:**
+
+![LeakCanary Leak Detectado](docs/screenshots/semana6/leakcanary_leak_detectado.png)
+
+**Leak corregido - Se reemplazo la referencia directa por `WeakReference` y LeakCanary confirmo `0 APPLICATION LEAKS`:**
+
+![LeakCanary Leak Corregido](docs/screenshots/semana6/leakcanary_leak_corregido.png)
+
+### Organizacion del Proyecto (MVVM)
+
+El proyecto mantiene una separacion clara de responsabilidades siguiendo el patron MVVM:
+
+| Capa | Carpeta | Responsabilidad |
+|------|---------|-----------------|
+| **Data - Local** | `data/local/` | Room Database, DAO, Entity |
+| **Data - Remote** | `data/remote/` | Retrofit, ApiService, DTOs, Interceptors |
+| **Repository** | `data/repository/` | Abstraccion de acceso a datos (local y remoto) |
+| **ViewModel** | `viewmodel/` | Logica de negocio, estado con StateFlow |
+| **UI** | `ui/screens/` | Pantallas stateless con Jetpack Compose |
+| **Navigation** | `navigation/` | Rutas y navegacion entre pantallas |
+
+### Cumplimiento Rubrica Semana 6
+
+| Criterio | Pts | Estado |
+|----------|-----|--------|
+| 1. Flujo funcional critico | 10 | DetailScreen -> API Retrofit -> TecnicosScreen |
+| 2. Procesos asincronos (Coroutines) | 15 | Dispatchers.IO en TecnicoRepository, StateFlow en ViewModel |
+| 3. Debugging y manejo de errores | 10 | try-catch (HttpException, IOException), Logcat con TAGs |
+| 4. Memory leaks (LeakCanary) | 10 | Leak detectado, corregido con WeakReference, documentado |
+| 5. Libreria externa (Retrofit+OkHttp+Gson) | 15 | Integrada, funcional y justificada tecnicamente |
+| 6. Estructura MVVM | 10 | Capas separadas: data/remote, repository, viewmodel, ui |
+| 7. Entrega GitHub (APK + README + capturas) | 15 | README completo, capturas en docs/screenshots/semana6/ |
+| 8. Informe tecnico PDF | 15 | Documentado con todas las secciones requeridas |
 
 ## Estructura de Entregables
 
 ```
 MyApplication/
 ├── app/src/main/java/com/example/myapplication/
-│   ├── viewmodel/SolicitudViewModel.kt    # Con logging y try-catch
-│   └── data/repository/SolicitudRepository.kt  # Con logging
+│   ├── MemoryLeakDemo.kt                         # Ejemplos memory leaks
+│   ├── viewmodel/
+│   │   ├── SolicitudViewModel.kt                  # Con logging y try-catch
+│   │   └── TecnicoViewModel.kt                    # ViewModel API (Semana 6)
+│   └── data/
+│       ├── repository/
+│       │   ├── SolicitudRepository.kt             # Con logging
+│       │   └── TecnicoRepository.kt               # Repository API (Semana 6)
+│       └── remote/                                # Capa de red (Semana 6)
+│           ├── ApiService.kt
+│           ├── MockInterceptor.kt
+│           ├── RetrofitClient.kt
+│           ├── NetworkResult.kt
+│           └── dto/
+│               ├── TecnicoDto.kt
+│               └── TecnicosResponse.kt
 ├── docs/
-│   ├── INFORME_SEMANA4_DEBUGGING_OPTIMIZACION.md  # Informe tecnico
+│   ├── INFORME_SEMANA4_DEBUGGING_OPTIMIZACION.md  # Informe Semana 4
 │   └── screenshots/
-│       ├── logcat_crud.png                # Evidencia Logcat
-│       ├── profiler_cpu.png               # Evidencia CPU Profiler
-│       └── profiler_memory.png            # Evidencia Memory Profiler
+│       ├── semana6/
+│       │   ├── tecnicos_gasfiteria.png            # TecnicosScreen gasfiteria
+│       │   ├── tecnicos_electricidad.png          # TecnicosScreen electricidad
+│       │   ├── logcat_solicitud_api.png           # Logcat tag:SolicitudAPI
+│       │   ├── logcat_mock_interceptor.png        # Logcat tag:MockInterceptor
+│       │   ├── logcat_performance.png             # Logcat tag:SolicitudPerformance
+│       │   ├── leakcanary_leak_detectado.png      # LeakCanary: 1 APPLICATION LEAK
+│       │   └── leakcanary_leak_corregido.png      # LeakCanary: 0 APPLICATION LEAKS
+│       ├── logcat_crud.png                        # Evidencia Logcat Semana 4
+│       ├── profiler_cpu.png                       # CPU Profiler Semana 4
+│       └── profiler_memory.png                    # Memory Profiler Semana 4
 └── README.md
 ```
 

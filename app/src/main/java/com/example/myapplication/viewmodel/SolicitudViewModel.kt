@@ -43,6 +43,7 @@ class SolicitudViewModel(application: Application) : AndroidViewModel(applicatio
         private const val TAG_CRUD = "SolicitudCRUD"
         private const val TAG_PERF = "SolicitudPerformance"
         private const val TAG_VALIDATION = "SolicitudValidation"
+        private const val TAG_MEMORY = "SolicitudMemory"
     }
 
     private val repository: SolicitudRepository
@@ -340,6 +341,20 @@ class SolicitudViewModel(application: Application) : AndroidViewModel(applicatio
                 Log.d(TAG_CRUD, "───────────────────────────────────────────────────")
             }
         }
+    }
+
+    /**
+     * Limpieza del ViewModel cuando se destruye.
+     * viewModelScope se cancela automaticamente aqui (buena practica vs GlobalScope).
+     */
+    override fun onCleared() {
+        super.onCleared()
+        Log.d(TAG_MEMORY, "ViewModel onCleared - viewModelScope cancelado automaticamente")
+        Log.d(TAG_MEMORY, "Coroutines activas finalizadas correctamente (viewModelScope)")
+        val runtime = Runtime.getRuntime()
+        val usedMemory = (runtime.totalMemory() - runtime.freeMemory()) / 1024 / 1024
+        val maxMemory = runtime.maxMemory() / 1024 / 1024
+        Log.i(TAG_MEMORY, "Memoria al limpiar ViewModel: ${usedMemory}MB / ${maxMemory}MB")
     }
 
     fun deleteSolicitud(id: Long) {

@@ -65,7 +65,8 @@ fun DetailScreen(
     solicitudId: Long,
     viewModel: SolicitudViewModel,
     onNavigateBack: () -> Unit,
-    onNavigateToEdit: (Long) -> Unit
+    onNavigateToEdit: (Long) -> Unit,
+    onNavigateToTecnicos: (String) -> Unit = {}
 ) {
     val solicitud by viewModel.selectedSolicitud.collectAsState()
     val context = LocalContext.current
@@ -325,6 +326,18 @@ fun DetailScreen(
                         .height(56.dp)
                 ) {
                     Text(stringResource(R.string.btn_cambiar_estado))
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Boton ver tecnicos disponibles
+                Button(
+                    onClick = { onNavigateToTecnicos(sol.tipoServicio) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                ) {
+                    Text(stringResource(R.string.btn_ver_tecnicos))
                 }
             }
         }
