@@ -2,8 +2,8 @@
 agp = "8.5.0"
 coreKtx = "1.12.0"
 junit = "4.13.2"
-junitVersion = "1.1.5"
-espressoCore = "3.5.1"
+junitVersion = "1.2.1"
+espressoCore = "3.6.1"
 lifecycleRuntimeKtx = "2.6.1"
 activityCompose = "1.8.0"
 kotlin = "2.0.0"
@@ -14,6 +14,7 @@ lifecycleViewModelCompose = "2.6.1"
 ksp = "2.0.0-1.0.21"
 kotlinxCoroutines = "1.7.3"
 leakcanary = "2.14"
+mockk = "1.13.8"
 retrofit = "2.9.0"
 okhttp = "4.12.0"
 gson = "2.10.1"
@@ -45,6 +46,8 @@ retrofit-gson = { group = "com.squareup.retrofit2", name = "converter-gson", ver
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 okhttp-logging = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
+mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinxCoroutines" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

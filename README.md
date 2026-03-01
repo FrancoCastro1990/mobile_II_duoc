@@ -52,7 +52,8 @@ app/src/main/java/com/example/myapplication/
 │       └── TecnicoRepository.kt    # Repositorio de tecnicos (Semana 6)
 ├── viewmodel/
 │   ├── SolicitudViewModel.kt       # ViewModel de solicitudes
-│   └── TecnicoViewModel.kt         # ViewModel de tecnicos (Semana 6)
+│   ├── TecnicoViewModel.kt         # ViewModel de tecnicos (Semana 6)
+│   └── FormValidator.kt            # Validacion de formulario (Semana 7 - SRP)
 ├── navigation/
 │   └── NavGraph.kt                 # Configuracion de navegacion
 └── ui/
@@ -83,6 +84,10 @@ app/src/main/java/com/example/myapplication/
 | OkHttp | 4.12.0 | Cliente HTTP con interceptores (Semana 6) |
 | Gson | 2.10.1 | Serializacion/deserializacion JSON (Semana 6) |
 | LeakCanary | 2.14 | Deteccion de memory leaks (Semana 5-6) |
+| JUnit 4 | 4.13.2 | Pruebas unitarias (Semana 7) |
+| MockK | 1.13.8 | Mocking de dependencias en tests (Semana 7) |
+| Coroutines Test | 1.7.3 | Testing de funciones suspend (Semana 7) |
+| Compose UI Test | BOM 2024.09.00 | Pruebas funcionales de UI (Semana 7) |
 
 ## Componentes UI Avanzados
 
@@ -482,7 +487,8 @@ MyApplication/
 │   ├── MemoryLeakDemo.kt                         # Ejemplos educativos memory leaks
 │   ├── viewmodel/
 │   │   ├── SolicitudViewModel.kt                  # Con logging y try-catch
-│   │   └── TecnicoViewModel.kt                    # ViewModel API (Semana 6)
+│   │   ├── TecnicoViewModel.kt                    # ViewModel API (Semana 6)
+│   │   └── FormValidator.kt                       # Validacion de formulario (Semana 7)
 │   └── data/
 │       ├── local/                                 # Room Database (Semana 2)
 │       │   ├── AppDatabase.kt
@@ -499,12 +505,21 @@ MyApplication/
 │           └── dto/
 │               ├── TecnicoDto.kt
 │               └── TecnicosResponse.kt
+├── app/src/test/java/.../                          # Pruebas unitarias (Semana 7)
+│   ├── viewmodel/
+│   │   └── FormValidatorTest.kt                    # 10 tests de validacion
+│   └── data/repository/
+│       └── TecnicoRepositoryTest.kt                # 7 tests de API con MockK
+├── app/src/androidTest/java/.../                    # Pruebas funcionales (Semana 7)
+│   ├── NavigationInstrumentedTest.kt               # 5 tests de navegacion
+│   └── FormularioInstrumentedTest.kt               # 4 tests de formulario
 ├── docs/
-│   ├── INFORME_SEMANA4_DEBUGGING_OPTIMIZACION.md  # Informe Semana 4
-│   ├── INFORME_SEMANA5_MEMORY_LEAKS.md            # Informe Semana 5
-│   ├── INFORME_SEMANA6_LIBRERIAS_EXTERNAS.md      # Informe Semana 6
+│   ├── INFORME_SEMANA4_DEBUGGING_OPTIMIZACION.md   # Informe Semana 4
+│   ├── INFORME_SEMANA5_MEMORY_LEAKS.md             # Informe Semana 5
+│   ├── INFORME_SEMANA6_LIBRERIAS_EXTERNAS.md       # Informe Semana 6
+│   ├── INFORME_SEMANA7.md                          # Informe Semana 7
 │   └── screenshots/
-│       ├── semana6/                               # Evidencias Semana 6
+│       ├── semana6/                                # Evidencias Semana 6
 │       │   ├── tecnicos_gasfiteria.png
 │       │   ├── tecnicos_electricidad.png
 │       │   ├── logcat_solicitud_api.png
@@ -512,9 +527,14 @@ MyApplication/
 │       │   ├── logcat_performance.png
 │       │   ├── leakcanary_leak_detectado.png
 │       │   └── leakcanary_leak_corregido.png
-│       ├── logcat_crud.png                        # Evidencia Semana 4
-│       ├── profiler_cpu.png                       # CPU Profiler Semana 4
-│       └── profiler_memory.png                    # Memory Profiler Semana 4
+│       ├── semana7/                                # Evidencias Semana 7
+│       │   ├── evidencia_test.png
+│       │   ├── evidencia_test_terminal.png
+│       │   ├── evidencia_androidTest.png
+│       │   └── evidencia_androidTest_terminal.png
+│       ├── logcat_crud.png                         # Evidencia Semana 4
+│       ├── profiler_cpu.png                        # CPU Profiler Semana 4
+│       └── profiler_memory.png                     # Memory Profiler Semana 4
 └── README.md
 ```
 
@@ -548,6 +568,186 @@ MyApplication/
 21. Verificar que TecnicosScreen muestra lista de tecnicos con datos
 22. Verificar en Logcat con `tag:SolicitudAPI` los logs de la consulta
 23. Verificar en Logcat con `tag:MockInterceptor` el interceptor en accion
+
+### Pruebas Automatizadas (Semana 7)
+24. Ejecutar `./gradlew test` - verificar 17 tests unitarios pasan
+25. Abrir reporte HTML en `app/build/reports/tests/testDebugUnitTest/index.html`
+26. Ejecutar `./gradlew connectedAndroidTest` (con emulador API 34/35)
+27. Abrir reporte HTML en `app/build/reports/androidTests/connected/debug/index.html`
+28. Verificar que todos los tests pasan (verde)
+
+## Semana 7 - Arquitectura Modular, Pruebas Unitarias y Funcionales
+
+### Refactorizacion SRP: FormValidator
+
+Se extrajo la logica de validacion del formulario desde `SolicitudViewModel.saveSolicitud()` a una clase independiente `FormValidator`. Esto mejora la separacion de responsabilidades (Single Responsibility Principle) y permite testear la validacion de forma aislada sin depender del framework Android.
+
+**Antes (acoplado en ViewModel):**
+```kotlin
+// Dentro de saveSolicitud() - logica inline
+val camposVacios = mutableListOf<String>()
+if (state.tipoServicio.isBlank()) camposVacios.add("tipoServicio")
+if (state.nombreCliente.isBlank()) camposVacios.add("nombreCliente")
+// ...
+```
+
+**Despues (delegado a FormValidator):**
+```kotlin
+// FormValidator.kt - clase independiente y testeable
+class FormValidator {
+    fun validate(tipoServicio, nombreCliente, telefono, direccion): ValidationResult
+}
+
+// SolicitudViewModel.kt - usa FormValidator
+private val formValidator = FormValidator()
+val validationResult = formValidator.validate(...)
+```
+
+| Archivo | Cambio |
+|---------|--------|
+| `viewmodel/FormValidator.kt` | Nueva clase con logica de validacion |
+| `viewmodel/SolicitudViewModel.kt` | Delegacion a FormValidator |
+
+### Componentes Jetpack Utilizados
+
+| Componente | Version | Uso en la App |
+|------------|---------|---------------|
+| ViewModel (AndroidViewModel) | 2.6.1 | Gestion de estado con StateFlow en SolicitudViewModel y TecnicoViewModel |
+| StateFlow / SharedFlow | 1.7.3 | Estado reactivo de formulario, lista de solicitudes, eventos UI |
+| Navigation Compose | 2.7.7 | Navegacion entre Home, Form, Detail y Tecnicos con NavGraph |
+| Room Database | 2.6.1 | Persistencia local de solicitudes con Entity, DAO y Repository |
+
+### Herramientas de Prueba
+
+| Herramienta | Version | Proposito |
+|-------------|---------|-----------|
+| JUnit 4 | 4.13.2 | Framework base para pruebas unitarias |
+| MockK | 1.13.8 | Mocking de dependencias (ApiService) en pruebas unitarias |
+| Coroutines Test | 1.7.3 | Testing de funciones suspend con runTest |
+| Compose UI Test | BOM 2024.09.00 | Pruebas funcionales de UI con interaccion simulada |
+
+### Pruebas Unitarias
+
+#### FormValidatorTest (10 tests)
+
+Prueba la logica de validacion del formulario sin dependencias Android:
+
+| Test | Tipo | Descripcion |
+|------|------|-------------|
+| `validate_todosLosCamposCompletos_retornaValido` | Positivo | Todos llenos -> valido |
+| `validate_camposConEspaciosInternos_retornaValido` | Positivo | "Maria Jose Lopez" -> valido |
+| `validate_camposDeUnCaracter_retornaValido` | Positivo | Campos minimos -> valido |
+| `validate_todosLosCamposVacios_retornaInvalido` | Negativo | Todo vacio -> 4 campos vacios |
+| `validate_tipoServicioVacio_retornaCampoFaltante` | Negativo | Solo falta tipoServicio |
+| `validate_nombreClienteVacio_retornaCampoFaltante` | Negativo | Solo falta nombreCliente |
+| `validate_telefonoVacio_retornaCampoFaltante` | Negativo | Solo falta telefono |
+| `validate_direccionVacia_retornaCampoFaltante` | Negativo | Solo falta direccion |
+| `validate_camposConSoloEspacios_retornaInvalido` | Negativo | Espacios en blanco -> invalido |
+| `validate_dosCamposFaltantes_retornaAmbos` | Negativo | Dos vacios -> lista con 2 |
+
+#### TecnicoRepositoryTest (7 tests)
+
+Prueba el repositorio de tecnicos mockeando la API con MockK:
+
+| Test | Tipo | Descripcion |
+|------|------|-------------|
+| `getTecnicosByTipo_respuestaExitosa_retornaSuccess` | Positivo | API ok -> Success con datos |
+| `getTecnicosByTipo_listaVacia_retornaSuccessVacio` | Positivo | API ok, lista vacia -> Success([]) |
+| `getTecnicosByTipo_verificaLlamadaCorrecta` | Positivo | Verifica que se llamo con tipo correcto |
+| `getTecnicosByTipo_successFalse_retornaError` | Negativo | success=false -> Error |
+| `getTecnicosByTipo_httpException_retornaError` | Negativo | HttpException(500) -> Error con codigo |
+| `getTecnicosByTipo_ioException_retornaErrorConexion` | Negativo | IOException -> Error conexion |
+| `getTecnicosByTipo_excepcionGenerica_retornaError` | Negativo | RuntimeException -> Error inesperado |
+
+### Pruebas Funcionales (Instrumentadas)
+
+#### NavigationInstrumentedTest (5 tests)
+
+Simula interacciones de navegacion entre pantallas:
+
+| Test | Interaccion Simulada |
+|------|---------------------|
+| `homeScreen_muestraTitulo` | Verificar "Necesitas Ayuda?" visible |
+| `homeScreen_fabNavegaAFormulario` | Click FAB -> "Nueva Solicitud" visible |
+| `formScreen_volverAHome` | FAB -> Form -> Back -> Home visible |
+| `formScreen_muestraSeccionesFormulario` | FAB -> Verificar secciones del form |
+| `formScreen_selectorAbreDialogo` | FAB -> Click selector -> Opciones visibles |
+
+#### FormularioInstrumentedTest (4 tests)
+
+Simula interacciones con el formulario de solicitudes:
+
+| Test | Interaccion Simulada |
+|------|---------------------|
+| `formulario_ingresarTextoEnCampos` | Escribir en campos -> verificar texto |
+| `formulario_seleccionarTipoServicio` | Abrir dialogo -> seleccionar -> verificar |
+| `formulario_guardarSinCampos_permaneceEnForm` | Click guardar sin datos -> form sigue visible |
+| `formulario_completarYGuardar` | Llenar todo -> guardar -> navega a home |
+
+### Evidencias de Ejecucion de Pruebas
+
+**Pruebas unitarias - Reporte HTML (`./gradlew test`):**
+
+![Reporte pruebas unitarias](docs/screenshots/semana7/evidencia_test.png)
+
+**Pruebas unitarias - Terminal:**
+
+![Terminal pruebas unitarias](docs/screenshots/semana7/evidencia_test_terminal.png)
+
+**Pruebas funcionales - Reporte HTML (`./gradlew connectedAndroidTest`):**
+
+![Reporte pruebas funcionales](docs/screenshots/semana7/evidencia_androidTest.png)
+
+**Pruebas funcionales - Terminal:**
+
+![Terminal pruebas funcionales](docs/screenshots/semana7/evidencia_androidTest_terminal.png)
+
+### Ejecucion de Pruebas
+
+```bash
+# Pruebas unitarias (no requiere emulador)
+./gradlew test
+# Reporte: app/build/reports/tests/testDebugUnitTest/index.html
+
+# Pruebas funcionales (requiere emulador API 34/35)
+./gradlew connectedAndroidTest
+# Reporte: app/build/reports/androidTests/connected/debug/index.html
+
+# Compilar proyecto completo
+./gradlew assembleDebug
+```
+
+### Estructura de Archivos Semana 7
+
+```
+app/src/
+├── main/java/.../viewmodel/
+│   ├── FormValidator.kt              # NUEVO: Validacion extraida (SRP)
+│   └── SolicitudViewModel.kt         # MODIFICADO: Usa FormValidator
+├── main/java/.../ui/screens/
+│   ├── HomeScreen.kt                 # MODIFICADO: testTag en FAB
+│   └── FormScreen.kt                 # MODIFICADO: testTag en campos y boton
+├── test/java/.../
+│   ├── viewmodel/
+│   │   └── FormValidatorTest.kt      # NUEVO: 10 tests unitarios
+│   └── data/repository/
+│       └── TecnicoRepositoryTest.kt  # NUEVO: 7 tests unitarios
+└── androidTest/java/.../
+    ├── NavigationInstrumentedTest.kt  # NUEVO: 5 tests funcionales
+    └── FormularioInstrumentedTest.kt  # NUEVO: 4 tests funcionales
+```
+
+### Cumplimiento Rubrica Semana 7
+
+| Criterio | Estado |
+|----------|--------|
+| 1. MVVM con SRP y extensibilidad | FormValidator extraido, capas separadas (data/viewmodel/ui) |
+| 2. Integracion ViewModel, StateFlow, Navigation, Room | Integrados y funcionando en todas las pantallas |
+| 3. Pruebas unitarias con JUnit/MockK | FormValidatorTest (10 tests) + TecnicoRepositoryTest (7 tests) |
+| 4. Pruebas funcionales simulando interacciones | NavigationInstrumentedTest (5) + FormularioInstrumentedTest (4) |
+| 5. Proyecto limpio, modular, sin errores | Compila sin errores, estructura organizada |
+| 6. Documentacion clara y completa | README.md con detalles de pruebas y arquitectura |
+| 7. Repositorio organizado con historial de commits | Commits descriptivos por semana |
 
 ## Autor
 

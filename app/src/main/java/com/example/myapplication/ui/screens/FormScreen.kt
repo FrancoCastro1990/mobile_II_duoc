@@ -45,6 +45,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
@@ -152,7 +153,9 @@ fun FormScreen(
                 value = formState.nombreCliente,
                 onValueChange = { viewModel.updateNombreCliente(it) },
                 label = { Text(stringResource(R.string.label_nombre_cliente)) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("campo_nombre_cliente"),
                 singleLine = true
             )
 
@@ -160,7 +163,9 @@ fun FormScreen(
                 value = formState.telefono,
                 onValueChange = { viewModel.updateTelefono(it) },
                 label = { Text(stringResource(R.string.label_telefono)) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("campo_telefono"),
                 singleLine = true
             )
 
@@ -168,7 +173,9 @@ fun FormScreen(
                 value = formState.direccion,
                 onValueChange = { viewModel.updateDireccion(it) },
                 label = { Text(stringResource(R.string.label_direccion)) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("campo_direccion"),
                 singleLine = true
             )
 
@@ -184,7 +191,8 @@ fun FormScreen(
                 label = { Text(stringResource(R.string.label_descripcion)) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(120.dp),
+                    .height(120.dp)
+                    .testTag("campo_descripcion"),
                 maxLines = 5
             )
 
@@ -196,6 +204,7 @@ fun FormScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp)
+                    .testTag("btn_guardar")
             ) {
                 if (isSaving) {
                     CircularProgressIndicator(
@@ -235,6 +244,7 @@ fun TipoServicioSelector(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
+            .testTag("selector_tipo_servicio")
             .semantics { contentDescription = selectorDescription },
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {

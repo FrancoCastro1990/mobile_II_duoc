@@ -31,6 +31,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.myapplication.R
@@ -67,6 +68,7 @@ fun HomeScreen(
                 onClick = onNavigateToForm,
                 modifier = Modifier
                     .size(56.dp)
+                    .testTag("fab_nueva_solicitud")
                     .semantics { contentDescription = fabDescription },
                 containerColor = MaterialTheme.colorScheme.primary
             ) {

@@ -47,6 +47,7 @@ class SolicitudViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     private val repository: SolicitudRepository
+    private val formValidator = FormValidator()
 
     val solicitudes: StateFlow<List<SolicitudEntity>>
 
@@ -182,15 +183,16 @@ class SolicitudViewModel(application: Application) : AndroidViewModel(applicatio
             Log.d(TAG_CRUD, "  - ID a editar: ${state.editingId}")
         }
 
-        // Validacion sincrona con logging detallado
-        val camposVacios = mutableListOf<String>()
-        if (state.tipoServicio.isBlank()) camposVacios.add("tipoServicio")
-        if (state.nombreCliente.isBlank()) camposVacios.add("nombreCliente")
-        if (state.telefono.isBlank()) camposVacios.add("telefono")
-        if (state.direccion.isBlank()) camposVacios.add("direccion")
+        // Validacion sincrona con logging detallado (delegada a FormValidator - SRP)
+        val validationResult = formValidator.validate(
+            tipoServicio = state.tipoServicio,
+            nombreCliente = state.nombreCliente,
+            telefono = state.telefono,
+            direccion = state.direccion
+        )
 
-        if (camposVacios.isNotEmpty()) {
-            Log.w(TAG_VALIDATION, "Validación fallida - Campos vacíos: ${camposVacios.joinToString(", ")}")
+        if (!validationResult.isValid) {
+            Log.w(TAG_VALIDATION, "Validación fallida - Campos vacíos: ${validationResult.camposVacios.joinToString(", ")}")
             viewModelScope.launch {
                 _uiEvent.emit(UiEvent.ShowToast("Por favor complete todos los campos obligatorios"))
             }
