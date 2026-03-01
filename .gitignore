@@ -13,3 +13,14 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Keystore (seguridad)
+*.jks
+*.keystore
+
+# Material de referencia (no parte de la app)
+CLAUDE.md
+PMY2202_*.html
+RESUMEN.md
+SEMANA_*.md
+*.pdf

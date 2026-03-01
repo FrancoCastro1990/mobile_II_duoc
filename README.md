@@ -481,7 +481,8 @@ El proyecto mantiene una separacion clara de responsabilidades siguiendo el patr
 ```
 MyApplication/
 ├── apk/
-│   └── app-debug.apk                             # APK listo para instalar
+│   ├── app-debug.apk                             # APK debug
+│   └── app-release.apk                           # APK firmado release (Semana 8)
 ├── app/src/main/java/com/example/myapplication/
 │   ├── MainActivity.kt                            # Con monitoreo de memoria
 │   ├── MemoryLeakDemo.kt                         # Ejemplos educativos memory leaks
@@ -518,6 +519,7 @@ MyApplication/
 │   ├── INFORME_SEMANA5_MEMORY_LEAKS.md             # Informe Semana 5
 │   ├── INFORME_SEMANA6_LIBRERIAS_EXTERNAS.md       # Informe Semana 6
 │   ├── INFORME_SEMANA7.md                          # Informe Semana 7
+│   ├── INFORME_SEMANA8.md                          # Informe Semana 8
 │   └── screenshots/
 │       ├── semana6/                                # Evidencias Semana 6
 │       │   ├── tecnicos_gasfiteria.png
@@ -532,6 +534,9 @@ MyApplication/
 │       │   ├── evidencia_test_terminal.png
 │       │   ├── evidencia_androidTest.png
 │       │   └── evidencia_androidTest_terminal.png
+│       ├── semana8/                                # Evidencias Semana 8
+│       │   ├── evidencia_key_store.png
+│       │   └── evidencia_crear_app.png
 │       ├── logcat_crud.png                         # Evidencia Semana 4
 │       ├── profiler_cpu.png                        # CPU Profiler Semana 4
 │       └── profiler_memory.png                     # Memory Profiler Semana 4
@@ -748,6 +753,91 @@ app/src/
 | 5. Proyecto limpio, modular, sin errores | Compila sin errores, estructura organizada |
 | 6. Documentacion clara y completa | README.md con detalles de pruebas y arquitectura |
 | 7. Repositorio organizado con historial de commits | Commits descriptivos por semana |
+
+## Semana 8 - Publicacion y Cierre Tecnico
+
+### Configuracion de Permisos
+
+Se agrego el permiso `INTERNET` en `AndroidManifest.xml`, requerido por Retrofit para comunicacion de red:
+
+```xml
+<uses-permission android:name="android.permission.INTERNET" />
+```
+
+### Versionado de la Aplicacion
+
+Se actualizo el versionado en `app/build.gradle.kts` para reflejar la version de entrega final:
+
+| Campo | Valor anterior | Valor actual | Significado |
+|-------|---------------|--------------|-------------|
+| `versionCode` | 1 | 8 | Semana 8, version interna para Google Play |
+| `versionName` | "1.0" | "1.0.0" | Formato semantico (major.minor.patch) |
+
+### Generacion de APK Firmado
+
+Para generar el APK firmado en Android Studio:
+
+1. **Build > Generate Signed Bundle / APK...**
+2. Seleccionar **APK** > Next
+3. Crear nuevo keystore: `keystore/necesitas-ayuda-release.jks`
+4. Completar alias: `necesitas-ayuda`, passwords, datos (org: Duoc UC, country: CL)
+5. Seleccionar **release**, marcar **V1 (JAR Signature) + V2 (Full APK Signature)**
+6. Copiar APK resultante a `apk/app-release.apk`
+
+El APK firmado garantiza la integridad y autenticidad de la aplicacion, verificando que no ha sido modificada despues de la firma.
+
+### Nota sobre Pruebas Funcionales: Compose UI Test vs Espresso
+
+Las pruebas funcionales de esta aplicacion utilizan **Compose UI Test** (parte de Jetpack Compose) en lugar de Espresso tradicional. Compose UI Test es el framework oficial de Google para pruebas de UI en aplicaciones Compose, y reemplaza a Espresso en este contexto:
+
+| Aspecto | Espresso (Views) | Compose UI Test (Compose) |
+|---------|-------------------|---------------------------|
+| Target | Android Views (XML layouts) | Jetpack Compose UI |
+| Localizacion | `onView(withId(R.id.xxx))` | `onNodeWithTag("xxx")` / `onNodeWithText("xxx")` |
+| Interaccion | `perform(click())` | `performClick()` |
+| Verificacion | `check(matches(isDisplayed()))` | `assertIsDisplayed()` |
+| Dependencia | `androidx.test.espresso` | `androidx.compose.ui.test` |
+
+Ambos frameworks ejecutan pruebas instrumentadas en un dispositivo/emulador real y validan la interaccion del usuario con la interfaz.
+
+### Evidencias de Publicacion
+
+**Creacion del Keystore:**
+
+![Creacion Keystore](docs/screenshots/semana8/evidencia_key_store.png)
+
+**Generacion del APK firmado:**
+
+![Generacion APK](docs/screenshots/semana8/evidencia_crear_app.png)
+
+### Informe Completo
+
+El informe detallado de la Semana 8 con arquitectura, pruebas, evidencias y reflexion de cierre se encuentra en [`docs/INFORME_SEMANA8.md`](docs/INFORME_SEMANA8.md).
+
+### Estructura de Archivos Semana 8
+
+```
+Archivos modificados:
+├── app/src/main/AndroidManifest.xml    # MODIFICADO: Permiso INTERNET
+├── app/build.gradle.kts                # MODIFICADO: versionCode=8, versionName=1.0.0
+├── .gitignore                          # MODIFICADO: *.jks, *.keystore, material referencia
+├── README.md                           # MODIFICADO: Seccion Semana 8
+├── docs/INFORME_SEMANA8.md             # NUEVO: Informe tecnico Semana 8
+└── apk/
+    └── app-release.apk                 # NUEVO: APK firmado (generado manualmente)
+```
+
+### Cumplimiento Rubrica Semana 8
+
+| Criterio | Pts | Estado |
+|----------|-----|--------|
+| 1. Arquitectura MVVM con SRP | 20 | MVVM + FormValidator extraido, capas data/viewmodel/ui separadas |
+| 2. Componentes Jetpack (ViewModel, StateFlow, Navigation, Room) | 15 | Integrados en todas las pantallas |
+| 3. Pruebas unitarias (JUnit + MockK) | 15 | 17 tests: FormValidatorTest (10) + TecnicoRepositoryTest (7) |
+| 4. Pruebas funcionales UI (Compose UI Test) | 15 | 9 tests: NavigationInstrumentedTest (5) + FormularioInstrumentedTest (4) |
+| 5. APK firmado con keystore | 10 | Permiso INTERNET, versionCode=8, firma V1+V2 |
+| 6. README tecnico completo | 15 | Documentacion completa de Semanas 2-8 con evidencias |
+| 7. Entrega GitHub organizada | 10 | .gitignore actualizado, commits descriptivos, repo publico |
 
 ## Autor
 
